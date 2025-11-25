@@ -12,8 +12,15 @@ public final class DatabaseFactory {
     private static HikariDataSource erpDataSource;
 
     static {
-        initAuthDB();
-        initErpDB();
+        try {
+            initAuthDB();
+            initErpDB();
+        } catch (Exception e) {
+            System.err.println("FATAL: Failed to initialize database connections");
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new ExceptionInInitializerError(e);
+        }
     }
 
     private DatabaseFactory() {
@@ -21,21 +28,33 @@ public final class DatabaseFactory {
     }
 
     private static void initAuthDB() {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/univ_auth");
-        config.setUsername("root"); // TODO: set to local DB user
-        config.setPassword("password"); // TODO: set to local DB password
-        config.setMaximumPoolSize(5);
-        authDataSource = new HikariDataSource(config);
+        try {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl("jdbc:mysql://localhost:3306/univ_auth");
+            config.setUsername("root"); // TODO: set to local DB user
+            config.setPassword("Punya@52"); // TODO: set to local DB password
+            config.setMaximumPoolSize(5);
+            authDataSource = new HikariDataSource(config);
+            System.out.println("Auth database connection initialized successfully");
+        } catch (Exception e) {
+            System.err.println("Failed to initialize Auth database connection");
+            throw e;
+        }
     }
 
     private static void initErpDB() {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/univ_erp");
-        config.setUsername("root"); // TODO: set to local DB user
-        config.setPassword("password"); // TODO: set to local DB password
-        config.setMaximumPoolSize(10);
-        erpDataSource = new HikariDataSource(config);
+        try {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl("jdbc:mysql://localhost:3306/univ_erp");
+            config.setUsername("root"); // TODO: set to local DB user
+            config.setPassword("Punya@52"); // TODO: set to local DB password
+            config.setMaximumPoolSize(10);
+            erpDataSource = new HikariDataSource(config);
+            System.out.println("ERP database connection initialized successfully");
+        } catch (Exception e) {
+            System.err.println("Failed to initialize ERP database connection");
+            throw e;
+        }
     }
 
     public static Connection getAuthConnection() throws SQLException {

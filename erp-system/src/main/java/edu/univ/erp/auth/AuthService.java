@@ -29,9 +29,17 @@ public class AuthService {
                         int userId = rs.getInt("user_id");
                         String roleStr = rs.getString("role");
 
+                        // Validate role before parsing
+                        UserRole role;
+                        try {
+                            role = UserRole.valueOf(roleStr);
+                        } catch (IllegalArgumentException e) {
+                            throw new Exception("Invalid user role in database: " + roleStr);
+                        }
+
                         updateLastLogin(userId);
 
-                        return new User(userId, username, UserRole.valueOf(roleStr));
+                        return new User(userId, username, role);
                     }
                 }
             }
