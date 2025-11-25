@@ -41,6 +41,15 @@ public class InstructorPanel extends JPanel {
             public boolean isCellEditable(int row, int col) {
                 return col >= 3 && col <= 5;
             }
+            
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                // Columns 3, 4, 5 are numeric (Double) for Quiz, Midterm, EndSem
+                if (columnIndex >= 3 && columnIndex <= 5) {
+                    return Double.class;
+                }
+                return String.class;
+            }
         };
         gradeTable = new JTable(tableModel);
         gradeTable.getColumnModel().getColumn(0).setMinWidth(0);
