@@ -6,6 +6,7 @@ import edu.univ.erp.service.InstructorService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,19 +53,37 @@ public class InstructorPanel extends JPanel {
             }
         };
         gradeTable = new JTable(tableModel);
-        gradeTable.getColumnModel().getColumn(0).setMinWidth(0);
-        gradeTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        // gradeTable.getColumnModel().getColumn(0).setMinWidth(0);
+        // gradeTable.getColumnModel().getColumn(0).setMaxWidth(0);
         add(new JScrollPane(gradeTable), BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
+        
+        // --- NEW BUTTON: Import CSV ---
+        JButton importBtn = new JButton("Import CSV");
+        importBtn.setBackground(new Color(100, 150, 255));
+        importBtn.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    instructorService.importGradesFromCSV(fc.getSelectedFile());
+                    JOptionPane.showMessageDialog(this, "Grades Imported Successfully!");
+                    loadStudentList(); // Refresh the table to show new scores
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                }
+            }
+        });
+        
         JButton saveBtn = new JButton("Save Grades");
         saveBtn.setBackground(new Color(100, 200, 100));
         saveBtn.addActionListener(e -> saveGrades());
-
-        bottomPanel.add(new JLabel("<html><i>Edit cells and click Save. Final Grade calculates automatically.</i></html>"));
+        bottomPanel.add(new JLabel("<html><i>Edit cells and click Save. OR Import CSV.</i></html>"));
+        bottomPanel.add(importBtn); // Add Import button
         bottomPanel.add(saveBtn);
+        
         add(bottomPanel, BorderLayout.SOUTH);
-
+        
         loadSections();
     }
 

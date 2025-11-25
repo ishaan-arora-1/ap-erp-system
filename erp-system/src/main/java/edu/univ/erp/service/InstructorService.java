@@ -4,6 +4,9 @@ import edu.univ.erp.access.AccessControl;
 import edu.univ.erp.data.DatabaseFactory;
 import edu.univ.erp.domain.User;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -113,6 +116,53 @@ public class InstructorService {
             }
         } catch (SQLException e) {
             return false;
+        }
+    }
+
+    // --- New Method for CSV Import ---
+
+    public void importGradesFromCSV(File file) throws Exception {
+        if (AccessControl.isMaintenanceModeOn()) {
+            throw new Exception("Maintenance Mode ON: Import disabled.");
+        }
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean isHeader = true;
+            int count = 0;
+
+            while ((line = br.readLine()) != null) {
+                // Skip the header row
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
+
+                String[] parts = line.split(",");
+                // Expected Format: EnrollmentID,Quiz,Midterm,EndSem
+                if (parts.length >= 4) {
+                    try {
+                        int enrollId = Integer.parseInt(parts[0].trim());
+                        double quiz = Double.parseDouble(parts[1].trim());
+                        double mid = Double.parseDouble(parts[2].trim());
+                        double end = Double.parseDouble(parts[3].trim());
+
+                        saveGrade(enrollId, "Quiz", quiz);
+                        saveGrade(enrollId, "Midterm", mid);
+                        saveGrade(enrollId, "EndSem", end);
+                        count++;
+                    } catch (NumberFormatException ignored) {
+                        // Skip malformed rows
+                        System.err.println("Skipping invalid row: " + line);
+                    }
+                }
+            }
+
+            if (count == 0) {
+                throw new Exception("No valid grade rows found or file is empty.");
+            }
+        } catch (Exception e) {
+            throw new Exception("Import Error: " + e.getMessage(), e);
         }
     }
 }
