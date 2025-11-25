@@ -9,6 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AdminService {
 
@@ -108,6 +112,60 @@ public class AdminService {
              PreparedStatement stmt = conn.prepareStatement(
                      "UPDATE settings SET setting_value = ? WHERE setting_key = 'maintenance_on'")) {
             stmt.setString(1, String.valueOf(enable));
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new Exception("Database Error: " + e.getMessage(), e);
+        }
+    }
+
+    // 1. Helper to fetch all courses for the dropdown
+    public List<Map<String, String>> getAllCourses() throws Exception {
+        List<Map<String, String>> list = new ArrayList<>();
+        try (Connection conn = DatabaseFactory.getErpConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT course_code, title FROM courses")) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("code", rs.getString("course_code"));
+                    map.put("title", rs.getString("title"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error fetching courses: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
+    // 2. Helper to fetch all instructors for the dropdown
+    public List<Map<String, String>> getAllInstructors() throws Exception {
+        List<Map<String, String>> list = new ArrayList<>();
+        try (Connection conn = DatabaseFactory.getErpConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT user_id, full_name FROM instructors")) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("id", String.valueOf(rs.getInt("user_id")));
+                    map.put("name", rs.getString("full_name"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error fetching instructors: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
+    // 3. The main method to create a section
+    public void createSection(String courseCode, int instructorId, String dayTime, String room, int capacity) throws Exception {
+        String sql = "INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseFactory.getErpConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, courseCode);
+            stmt.setInt(2, instructorId);
+            stmt.setString(3, dayTime);
+            stmt.setString(4, room);
+            stmt.setInt(5, capacity);
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new Exception("Database Error: " + e.getMessage(), e);

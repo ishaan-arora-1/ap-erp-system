@@ -88,6 +88,44 @@ public class StudentPanel extends JPanel {
         myTable = new JTable(myModel);
         panel.add(new JScrollPane(myTable), BorderLayout.CENTER);
 
+        // --- NEW BUTTON: View Grades ---
+        JButton gradesBtn = new JButton("View Grades");
+        gradesBtn.addActionListener(e -> {
+            int row = myTable.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Select a section to view grades.");
+                return;
+            }
+
+            String secId = String.valueOf(myModel.getValueAt(row, 0));
+            String courseTitle = String.valueOf(myModel.getValueAt(row, 1));
+            
+            try {
+                Map<String, Double> grades = studentService.getGrades(getCurrentUser(), Integer.parseInt(secId));
+                
+                // Calculate Final Grade (Using same logic as InstructorPanel)
+                double quiz = grades.getOrDefault("Quiz", 0.0);
+                double mid = grades.getOrDefault("Midterm", 0.0);
+                double end = grades.getOrDefault("EndSem", 0.0);
+                double finalGrade = (quiz * 0.2) + (mid * 0.3) + (end * 0.5);
+
+                String message = String.format("""
+                    Grades for %s:
+                    -------------------------
+                    Quiz (20%%):     %.2f
+                    Midterm (30%%):  %.2f
+                    EndSem (50%%):   %.2f
+                    -------------------------
+                    FINAL GRADE:    %.2f
+                    """, courseTitle, quiz, mid, end, finalGrade);
+
+                JOptionPane.showMessageDialog(this, message, "Grade Report", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error fetching grades: " + ex.getMessage());
+            }
+        });
+
         JButton dropBtn = new JButton("Drop Selected Section");
         dropBtn.setBackground(new Color(255, 120, 120));
         dropBtn.addActionListener(e -> {
@@ -116,6 +154,7 @@ public class StudentPanel extends JPanel {
         });
 
         JPanel btnPanel = new JPanel();
+        btnPanel.add(gradesBtn); // Add the new button
         btnPanel.add(dropBtn);
         panel.add(btnPanel, BorderLayout.SOUTH);
 

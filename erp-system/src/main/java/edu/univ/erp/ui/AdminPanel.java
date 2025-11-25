@@ -17,6 +17,7 @@ public class AdminPanel extends JPanel {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Manage Users", createUserPanel());
         tabs.addTab("Manage Courses", createCoursePanel());
+        tabs.addTab("Manage Sections", createSectionPanel()); // <--- ADD THIS LINE
         tabs.addTab("System Settings", createSettingsPanel());
 
         add(tabs, BorderLayout.CENTER);
@@ -116,6 +117,100 @@ public class AdminPanel extends JPanel {
         });
 
         panel.add(maintToggle);
+        return panel;
+    }
+
+    private JPanel createSectionPanel() {
+        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
+
+        // Form Components
+        JComboBox<String> courseBox = new JComboBox<>();
+        JComboBox<String> instructorBox = new JComboBox<>();
+        JTextField timeField = new JTextField(); // e.g. "Mon 10:00"
+        JTextField roomField = new JTextField();
+        JTextField capField = new JTextField();
+        
+        // Lists to hold IDs hidden from the UI
+        java.util.List<String> courseCodes = new java.util.ArrayList<>();
+        java.util.List<Integer> instructorIds = new java.util.ArrayList<>();
+
+        JButton loadBtn = new JButton("Refresh Lists");
+        loadBtn.addActionListener(e -> {
+            try {
+                courseBox.removeAllItems();
+                courseCodes.clear();
+                instructorBox.removeAllItems();
+                instructorIds.clear();
+
+                // Load Courses
+                for (java.util.Map<String, String> c : adminService.getAllCourses()) {
+                    courseBox.addItem(c.get("code") + ": " + c.get("title"));
+                    courseCodes.add(c.get("code"));
+                }
+
+                // Load Instructors
+                for (java.util.Map<String, String> i : adminService.getAllInstructors()) {
+                    instructorBox.addItem(i.get("name"));
+                    instructorIds.add(Integer.parseInt(i.get("id")));
+                }
+
+                JOptionPane.showMessageDialog(this, "Lists refreshed!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error loading lists: " + ex.getMessage());
+            }
+        });
+
+        JButton createBtn = new JButton("Create Section");
+        createBtn.addActionListener(e -> {
+            try {
+                int cIdx = courseBox.getSelectedIndex();
+                int iIdx = instructorBox.getSelectedIndex();
+                
+                if (cIdx == -1 || iIdx == -1) {
+                    JOptionPane.showMessageDialog(this, "Please select a course and instructor.");
+                    return;
+                }
+
+                String code = courseCodes.get(cIdx);
+                int instId = instructorIds.get(iIdx);
+                int cap = Integer.parseInt(capField.getText().trim());
+
+                adminService.createSection(code, instId, 
+                        timeField.getText().trim(), 
+                        roomField.getText().trim(), 
+                        cap);
+                        
+                JOptionPane.showMessageDialog(this, "Section Created!");
+            } catch (NumberFormatException nfe) {
+                JOptionPane.showMessageDialog(this, "Capacity must be a number.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
+        });
+
+        // Add to Panel
+        panel.add(new JLabel("Load Data First:"));
+        panel.add(loadBtn);
+        
+        panel.add(new JLabel("Course:"));
+        panel.add(courseBox);
+        
+        panel.add(new JLabel("Instructor:"));
+        panel.add(instructorBox);
+        
+        panel.add(new JLabel("Day/Time (e.g. Mon 9am):"));
+        panel.add(timeField);
+        
+        panel.add(new JLabel("Room:"));
+        panel.add(roomField);
+        
+        panel.add(new JLabel("Capacity:"));
+        panel.add(capField);
+        
+        panel.add(new JLabel("")); // Spacer
+        panel.add(createBtn);
+
         return panel;
     }
 }

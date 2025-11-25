@@ -111,6 +111,31 @@ public class StudentService {
         return list;
     }
 
+    public Map<String, Double> getGrades(User student, int sectionId) throws Exception {
+        Map<String, Double> grades = new HashMap<>();
+        // Query joins enrollments to find the correct enrollment_id, then gets grades
+        String sql = """
+            SELECT g.component_name, g.score
+            FROM grades g
+            JOIN enrollments e ON g.enrollment_id = e.enrollment_id
+            WHERE e.student_id = ? AND e.section_id = ?
+            """;
+        
+        try (Connection conn = DatabaseFactory.getErpConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, student.getUserId());
+            stmt.setInt(2, sectionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    grades.put(rs.getString("component_name"), rs.getDouble("score"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Database Error: " + e.getMessage(), e);
+        }
+        return grades;
+    }
+
     private void ensureNotDuplicate(Connection conn, int studentId, int sectionId) throws SQLException, Exception {
         String checkDup = "SELECT 1 FROM enrollments WHERE student_id = ? AND section_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(checkDup)) {
