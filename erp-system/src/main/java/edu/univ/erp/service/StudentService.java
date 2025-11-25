@@ -172,4 +172,64 @@ public class StudentService {
             stmt.executeUpdate();
         }
     }
+
+    public List<Map<String, String>> getTranscriptData(User student) throws Exception {
+        List<Map<String, String>> transcript = new ArrayList<>();
+        
+        // Get all sections the student is enrolled in
+        String sql = """
+            SELECT e.enrollment_id, c.course_code, c.title
+            FROM enrollments e
+            JOIN sections s ON e.section_id = s.section_id
+            JOIN courses c ON s.course_code = c.course_code
+            WHERE e.student_id = ?
+            """;
+
+        try (Connection conn = DatabaseFactory.getErpConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, student.getUserId());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int enrollId = rs.getInt("enrollment_id");
+                    String code = rs.getString("course_code");
+                    String title = rs.getString("title");
+
+                    // Fetch grades for this specific enrollment to calculate final score
+                    Map<String, Double> grades = getGradesForEnrollment(conn, enrollId);
+                    
+                    double quiz = grades.getOrDefault("Quiz", 0.0);
+                    double mid = grades.getOrDefault("Midterm", 0.0);
+                    double end = grades.getOrDefault("EndSem", 0.0);
+                    double finalGrade = (quiz * 0.2) + (mid * 0.3) + (end * 0.5);
+
+                    Map<String, String> record = new HashMap<>();
+                    record.put("code", code);
+                    record.put("title", title);
+                    record.put("grade", String.format("%.2f", finalGrade));
+                    
+                    transcript.add(record);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Database Error: " + e.getMessage(), e);
+        }
+        return transcript;
+    }
+
+    // Helper to get grades reusing an existing connection
+    private Map<String, Double> getGradesForEnrollment(Connection conn, int enrollmentId) throws SQLException {
+        Map<String, Double> grades = new HashMap<>();
+        String sql = "SELECT component_name, score FROM grades WHERE enrollment_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, enrollmentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    grades.put(rs.getString("component_name"), rs.getDouble("score"));
+                }
+            }
+        }
+        return grades;
+    }
 }

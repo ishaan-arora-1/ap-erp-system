@@ -7,6 +7,8 @@ import edu.univ.erp.service.StudentService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +90,9 @@ public class StudentPanel extends JPanel {
         myTable = new JTable(myModel);
         panel.add(new JScrollPane(myTable), BorderLayout.CENTER);
 
-        // --- NEW BUTTON: View Grades ---
+        JPanel btnPanel = new JPanel();
+
+        // 1. View Grades Button
         JButton gradesBtn = new JButton("View Grades");
         gradesBtn.addActionListener(e -> {
             int row = myTable.getSelectedRow();
@@ -96,66 +100,74 @@ public class StudentPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Select a section to view grades.");
                 return;
             }
-
             String secId = String.valueOf(myModel.getValueAt(row, 0));
             String courseTitle = String.valueOf(myModel.getValueAt(row, 1));
-            
             try {
                 Map<String, Double> grades = studentService.getGrades(getCurrentUser(), Integer.parseInt(secId));
-                
-                // Calculate Final Grade (Using same logic as InstructorPanel)
                 double quiz = grades.getOrDefault("Quiz", 0.0);
                 double mid = grades.getOrDefault("Midterm", 0.0);
                 double end = grades.getOrDefault("EndSem", 0.0);
                 double finalGrade = (quiz * 0.2) + (mid * 0.3) + (end * 0.5);
-
-                String message = String.format("""
-                    Grades for %s:
-                    -------------------------
-                    Quiz (20%%):     %.2f
-                    Midterm (30%%):  %.2f
-                    EndSem (50%%):   %.2f
-                    -------------------------
-                    FINAL GRADE:    %.2f
-                    """, courseTitle, quiz, mid, end, finalGrade);
-
-                JOptionPane.showMessageDialog(this, message, "Grade Report", JOptionPane.INFORMATION_MESSAGE);
-
+                String message = String.format("Grades for %s:\nQuiz: %.2f\nMidterm: %.2f\nEndSem: %.2f\nFINAL: %.2f", 
+                        courseTitle, quiz, mid, end, finalGrade);
+                JOptionPane.showMessageDialog(this, message);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error fetching grades: " + ex.getMessage());
+                ex.printStackTrace();
             }
         });
+        btnPanel.add(gradesBtn);
 
+        // 2. NEW BUTTON: Download Transcript
+        JButton exportBtn = new JButton("Download Transcript");
+        exportBtn.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Transcript");
+            fileChooser.setSelectedFile(new File("transcript.csv"));
+            
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                try (PrintWriter writer = new PrintWriter(fileToSave)) {
+                    
+                    // Fetch Data
+                    List<Map<String, String>> data = studentService.getTranscriptData(getCurrentUser());
+                    
+                    // Write CSV Header
+                    writer.println("Course Code,Course Title,Final Grade");
+                    
+                    // Write Rows
+                    for (Map<String, String> rowData : data) {
+                        writer.println(String.format("%s,%s,%s", 
+                                rowData.get("code"), 
+                                rowData.get("title"), 
+                                rowData.get("grade")));
+                    }
+                    
+                    JOptionPane.showMessageDialog(this, "Transcript saved successfully!");
+                    
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error saving file: " + ex.getMessage());
+                }
+            }
+        });
+        btnPanel.add(exportBtn);
+
+        // 3. Drop Button
         JButton dropBtn = new JButton("Drop Selected Section");
         dropBtn.setBackground(new Color(255, 120, 120));
         dropBtn.addActionListener(e -> {
             int row = myTable.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Select a section to drop.");
-                return;
-            }
-
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Are you sure you want to drop this course?", "Confirm",
-                    JOptionPane.YES_NO_OPTION);
-            if (confirm != JOptionPane.YES_OPTION) {
-                return;
-            }
-
+            if (row == -1) return;
             String secId = String.valueOf(myModel.getValueAt(row, 0));
             try {
                 studentService.drop(getCurrentUser(), Integer.parseInt(secId));
-                JOptionPane.showMessageDialog(this, "Dropped successfully.");
                 refreshMyData();
                 refreshCatalog();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-            }
+                JOptionPane.showMessageDialog(this, "Dropped.");
+            } catch(Exception ex) { ex.printStackTrace(); }
         });
-
-        JPanel btnPanel = new JPanel();
-        btnPanel.add(gradesBtn); // Add the new button
         btnPanel.add(dropBtn);
+
         panel.add(btnPanel, BorderLayout.SOUTH);
 
         return panel;
