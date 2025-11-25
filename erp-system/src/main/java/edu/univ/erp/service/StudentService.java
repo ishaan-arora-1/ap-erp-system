@@ -15,6 +15,10 @@ import java.util.Map;
 
 public class StudentService {
 
+    private void notify(User user, String msg) {
+        NotificationService.addNotification(user, msg);
+    }
+
     public List<Map<String, String>> getCourseCatalog() throws Exception {
         List<Map<String, String>> catalog = new ArrayList<>();
         String sql = """
@@ -60,6 +64,9 @@ public class StudentService {
             ensureNotDuplicate(conn, student.getUserId(), sectionId);
             ensureCapacity(conn, sectionId);
             insertEnrollment(conn, student.getUserId(), sectionId);
+
+            // --- NEW LINE ---
+            notify(student, "Registered for Section ID: " + sectionId);
         } catch (SQLException e) {
             throw new Exception("Database Error: " + e.getMessage(), e);
         }
@@ -70,12 +77,38 @@ public class StudentService {
             throw new Exception("System is under maintenance.");
         }
 
-        try (Connection conn = DatabaseFactory.getErpConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "DELETE FROM enrollments WHERE student_id = ? AND section_id = ?")) {
-            stmt.setInt(1, student.getUserId());
-            stmt.setInt(2, sectionId);
-            stmt.executeUpdate();
+        try (Connection conn = DatabaseFactory.getErpConnection()) {
+            // First, get the enrollment_id
+            int enrollmentId = -1;
+            String findEnrollment = "SELECT enrollment_id FROM enrollments WHERE student_id = ? AND section_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(findEnrollment)) {
+                stmt.setInt(1, student.getUserId());
+                stmt.setInt(2, sectionId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        enrollmentId = rs.getInt("enrollment_id");
+                    } else {
+                        throw new Exception("You are not enrolled in this section.");
+                    }
+                }
+            }
+
+            // Delete any grades associated with this enrollment
+            String deleteGrades = "DELETE FROM grades WHERE enrollment_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteGrades)) {
+                stmt.setInt(1, enrollmentId);
+                stmt.executeUpdate();
+            }
+
+            // Now delete the enrollment
+            String deleteEnrollment = "DELETE FROM enrollments WHERE enrollment_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteEnrollment)) {
+                stmt.setInt(1, enrollmentId);
+                stmt.executeUpdate();
+            }
+
+            // --- NEW LINE ---
+            notify(student, "Dropped Section ID: " + sectionId);
         } catch (SQLException e) {
             throw new Exception("Database Error: " + e.getMessage(), e);
         }

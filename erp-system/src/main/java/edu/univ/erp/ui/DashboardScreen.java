@@ -33,6 +33,12 @@ public class DashboardScreen extends JFrame {
         // --- Header Buttons Panel ---
         JPanel headerBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
+        // --- NEW BUTTON: Notifications ---
+        JButton notifBtn = new JButton("Notifications");
+        notifBtn.setBackground(new Color(255, 200, 100)); // Orange color
+        notifBtn.addActionListener(e -> showNotifications());
+        headerBtns.add(notifBtn);
+
         // 1. Change Password Button
         JButton passBtn = new JButton("Change Password");
         passBtn.addActionListener(e -> showChangePasswordDialog());
@@ -94,6 +100,29 @@ public class DashboardScreen extends JFrame {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         }
+    }
+
+    private void showNotifications() {
+        User user = SessionManager.getCurrentUser();
+        java.util.List<String> notifs = edu.univ.erp.service.NotificationService.getNotifications(user);
+        
+        if (notifs.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No new notifications.");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (String msg : notifs) {
+            sb.append(msg).append("\n");
+        }
+
+        JTextArea textArea = new JTextArea(sb.toString());
+        textArea.setEditable(false);
+        textArea.setRows(10);
+        textArea.setColumns(40);
+
+        JOptionPane.showMessageDialog(this, new JScrollPane(textArea), 
+                "Notifications", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void logout() {
