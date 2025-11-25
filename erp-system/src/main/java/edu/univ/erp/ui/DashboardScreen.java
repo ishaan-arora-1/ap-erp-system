@@ -1,5 +1,6 @@
 package edu.univ.erp.ui;
 
+import edu.univ.erp.access.AccessControl;
 import edu.univ.erp.auth.AuthService; // Import this
 import edu.univ.erp.auth.SessionManager;
 import edu.univ.erp.domain.User;
@@ -25,6 +26,18 @@ public class DashboardScreen extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+
+        // --- CHANGE: Maintenance Banner Logic ---
+        if (AccessControl.isMaintenanceModeOn() && user.getRole() != UserRole.ADMIN) {
+            JLabel banner = new JLabel("⚠️ SYSTEM UNDER MAINTENANCE - READ ONLY MODE ⚠️", SwingConstants.CENTER);
+            banner.setOpaque(true);
+            banner.setBackground(Color.RED);
+            banner.setForeground(Color.WHITE);
+            banner.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            banner.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+            add(banner, BorderLayout.SOUTH);
+        }
+        // ----------------------------------------
 
         JPanel header = new JPanel(new BorderLayout());
         header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

@@ -6,7 +6,6 @@ import edu.univ.erp.service.InstructorService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +17,7 @@ public class InstructorPanel extends JPanel {
     private final JTable gradeTable;
     private final DefaultTableModel tableModel;
     private final List<String> sectionIds = new ArrayList<>();
+    private final JLabel statsLabel; // --- CHANGE: Field for stats
 
     public InstructorPanel() {
         this.instructorService = new InstructorService();
@@ -42,10 +42,8 @@ public class InstructorPanel extends JPanel {
             public boolean isCellEditable(int row, int col) {
                 return col >= 3 && col <= 5;
             }
-            
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                // Columns 3, 4, 5 are numeric (Double) for Quiz, Midterm, EndSem
                 if (columnIndex >= 3 && columnIndex <= 5) {
                     return Double.class;
                 }
@@ -53,13 +51,10 @@ public class InstructorPanel extends JPanel {
             }
         };
         gradeTable = new JTable(tableModel);
-        // gradeTable.getColumnModel().getColumn(0).setMinWidth(0);
-        // gradeTable.getColumnModel().getColumn(0).setMaxWidth(0);
         add(new JScrollPane(gradeTable), BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
         
-        // --- NEW BUTTON: Import CSV ---
         JButton importBtn = new JButton("Import CSV");
         importBtn.setBackground(new Color(100, 150, 255));
         importBtn.addActionListener(e -> {
@@ -68,7 +63,7 @@ public class InstructorPanel extends JPanel {
                 try {
                     instructorService.importGradesFromCSV(fc.getSelectedFile());
                     JOptionPane.showMessageDialog(this, "Grades Imported Successfully!");
-                    loadStudentList(); // Refresh the table to show new scores
+                    loadStudentList();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
                 }
@@ -78,8 +73,15 @@ public class InstructorPanel extends JPanel {
         JButton saveBtn = new JButton("Save Grades");
         saveBtn.setBackground(new Color(100, 200, 100));
         saveBtn.addActionListener(e -> saveGrades());
+
+        // --- CHANGE: Add stats label to bottom panel
+        statsLabel = new JLabel("Class Average: N/A");
+        statsLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        statsLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 20));
+
         bottomPanel.add(new JLabel("<html><i>Edit cells and click Save. OR Import CSV.</i></html>"));
-        bottomPanel.add(importBtn); // Add Import button
+        bottomPanel.add(statsLabel); // Add label here
+        bottomPanel.add(importBtn);
         bottomPanel.add(saveBtn);
         
         add(bottomPanel, BorderLayout.SOUTH);
@@ -111,6 +113,7 @@ public class InstructorPanel extends JPanel {
         int index = sectionSelector.getSelectedIndex();
         if (index < 0 || index >= sectionIds.size()) {
             tableModel.setRowCount(0);
+            statsLabel.setText("Class Average: N/A");
             return;
         }
 
@@ -120,11 +123,20 @@ public class InstructorPanel extends JPanel {
         try {
             List<Map<String, Object>> students =
                     instructorService.getClassList(Integer.parseInt(secId), SessionManager.getCurrentUser());
+            
+            // --- CHANGE: Variables for average calculation
+            double totalFinal = 0.0;
+            int studentCount = 0;
+
             for (Map<String, Object> s : students) {
                 double quiz = s.containsKey("Quiz") ? (Double) s.get("Quiz") : 0.0;
                 double mid = s.containsKey("Midterm") ? (Double) s.get("Midterm") : 0.0;
                 double end = s.containsKey("EndSem") ? (Double) s.get("EndSem") : 0.0;
                 double finalGrade = (quiz * 0.2) + (mid * 0.3) + (end * 0.5);
+
+                // Accumulate sum
+                totalFinal += finalGrade;
+                studentCount++;
 
                 tableModel.addRow(new Object[]{
                         s.get("enrollment_id"),
@@ -136,6 +148,15 @@ public class InstructorPanel extends JPanel {
                         String.format("%.2f", finalGrade)
                 });
             }
+
+            // --- CHANGE: Update the stats label
+            if (studentCount > 0) {
+                double avg = totalFinal / studentCount;
+                statsLabel.setText(String.format("Class Average: %.2f", avg));
+            } else {
+                statsLabel.setText("Class Average: 0.00");
+            }
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error loading students: " + e.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);

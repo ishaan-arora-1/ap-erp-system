@@ -22,3 +22,4 @@ mvn clean compile
 mvn exec:java -Dexec.mainClass="edu.univ.erp.Main"
 ```
 
+Please ensure that 'mysql' and 'mysqldump' are added to your system's PATH environment variable for the Backup/Restore features to work.

@@ -182,18 +182,12 @@ public class AdminService {
         String dbUser = "root";
         String dbPass = "Punya@52"; // Matches your DatabaseFactory config
 
-        // Use absolute path to mysqldump (adjust if your installation differs)
-        String mysqldumpPath = "/opt/homebrew/bin/mysqldump";
-        
-        // Fallback to PATH if absolute path doesn't exist
-        File mysqldumpFile = new File(mysqldumpPath);
-        if (!mysqldumpFile.exists()) {
-            mysqldumpPath = "mysqldump";
-        }
+        // --- CHANGE: Removed hardcoded path ---
+        String mysqldumpCmd = "mysqldump";
 
         // Command: mysqldump -u root -pPunya@52 --set-gtid-purged=OFF --databases univ_erp -r "path/to/file.sql"
         List<String> commands = new ArrayList<>();
-        commands.add(mysqldumpPath);
+        commands.add(mysqldumpCmd);
         commands.add("-u");
         commands.add(dbUser);
         commands.add("-p" + dbPass);
@@ -231,18 +225,12 @@ public class AdminService {
         String dbUser = "root";
         String dbPass = "Punya@52";
 
-        // Use absolute path to mysql (adjust if your installation differs)
-        String mysqlPath = "/opt/homebrew/bin/mysql";
-        
-        // Fallback to PATH if absolute path doesn't exist
-        File mysqlFile = new File(mysqlPath);
-        if (!mysqlFile.exists()) {
-            mysqlPath = "mysql";
-        }
+        // --- CHANGE: Removed hardcoded path ---
+        String mysqlCmd = "mysql";
 
         // Command: mysql -u root -pPunya@52 < "path/to/file.sql"
         List<String> commands = new ArrayList<>();
-        commands.add(mysqlPath);
+        commands.add(mysqlCmd);
         commands.add("-u");
         commands.add(dbUser);
         commands.add("-p" + dbPass);
