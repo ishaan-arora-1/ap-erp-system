@@ -4,6 +4,9 @@ import edu.univ.erp.data.DatabaseFactory;
 import edu.univ.erp.domain.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -169,6 +172,105 @@ public class AdminService {
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new Exception("Database Error: " + e.getMessage(), e);
+        }
+    }
+
+    // --- Backup & Restore Bonus ---
+
+    public void backupDB(String filePath) throws Exception {
+        String dbName = "univ_erp"; 
+        String dbUser = "root";
+        String dbPass = "Punya@52"; // Matches your DatabaseFactory config
+
+        // Use absolute path to mysqldump (adjust if your installation differs)
+        String mysqldumpPath = "/opt/homebrew/bin/mysqldump";
+        
+        // Fallback to PATH if absolute path doesn't exist
+        File mysqldumpFile = new File(mysqldumpPath);
+        if (!mysqldumpFile.exists()) {
+            mysqldumpPath = "mysqldump";
+        }
+
+        // Command: mysqldump -u root -pPunya@52 --set-gtid-purged=OFF --databases univ_erp -r "path/to/file.sql"
+        List<String> commands = new ArrayList<>();
+        commands.add(mysqldumpPath);
+        commands.add("-u");
+        commands.add(dbUser);
+        commands.add("-p" + dbPass);
+        commands.add("--set-gtid-purged=OFF"); // Prevent GTID conflicts
+        commands.add("--databases");
+        commands.add(dbName);
+        commands.add("-r");
+        commands.add(filePath);
+
+        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb.redirectErrorStream(true); // Merge stderr into stdout
+        Process process = pb.start();
+        
+        // Capture output for debugging
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+        }
+        
+        int exitCode = process.waitFor();
+
+        if (exitCode != 0) {
+            String errorMsg = output.toString().trim();
+            if (errorMsg.isEmpty()) {
+                errorMsg = "Unknown error occurred";
+            }
+            throw new Exception("Backup failed: " + errorMsg);
+        }
+    }
+
+    public void restoreDB(String filePath) throws Exception {
+        String dbUser = "root";
+        String dbPass = "Punya@52";
+
+        // Use absolute path to mysql (adjust if your installation differs)
+        String mysqlPath = "/opt/homebrew/bin/mysql";
+        
+        // Fallback to PATH if absolute path doesn't exist
+        File mysqlFile = new File(mysqlPath);
+        if (!mysqlFile.exists()) {
+            mysqlPath = "mysql";
+        }
+
+        // Command: mysql -u root -pPunya@52 < "path/to/file.sql"
+        List<String> commands = new ArrayList<>();
+        commands.add(mysqlPath);
+        commands.add("-u");
+        commands.add(dbUser);
+        commands.add("-p" + dbPass);
+
+        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb.redirectErrorStream(true); // Merge stderr into stdout
+        // This effectively does the "< file.sql" part
+        pb.redirectInput(new File(filePath));
+
+        Process process = pb.start();
+        
+        // Capture output for debugging
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+        }
+        
+        int exitCode = process.waitFor();
+
+        if (exitCode != 0) {
+            String errorMsg = output.toString().trim();
+            if (errorMsg.isEmpty()) {
+                errorMsg = "Unknown error occurred";
+            }
+            throw new Exception("Restore failed: " + errorMsg);
         }
     }
 }

@@ -103,9 +103,15 @@ public class AdminPanel extends JPanel {
     }
 
     private JPanel createSettingsPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JCheckBox maintToggle = new JCheckBox("Enable Maintenance Mode");
+        // Change layout to BoxLayout Y_AXIS to stack items vertically
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        // 1. Maintenance Mode Section
+        JPanel maintPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JCheckBox maintToggle = new JCheckBox("Enable Maintenance Mode");
+        maintToggle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         maintToggle.addActionListener(e -> {
             try {
                 adminService.setMaintenanceMode(maintToggle.isSelected());
@@ -115,8 +121,55 @@ public class AdminPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         });
+        maintPanel.add(maintToggle);
+        
+        // 2. Backup & Restore Section
+        JPanel dbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        dbPanel.setBorder(BorderFactory.createTitledBorder("Database Operations (Bonus)"));
+        
+        JButton backupBtn = new JButton("Backup Data");
+        backupBtn.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            fc.setSelectedFile(new java.io.File("erp_backup.sql"));
+            if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    adminService.backupDB(fc.getSelectedFile().getAbsolutePath());
+                    JOptionPane.showMessageDialog(this, "Backup Successful!");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                }
+            }
+        });
 
-        panel.add(maintToggle);
+        JButton restoreBtn = new JButton("Restore Data");
+        restoreBtn.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                int confirm = JOptionPane.showConfirmDialog(this, 
+                    "Restoring will OVERWRITE current data. Continue?", 
+                    "Warning", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try {
+                        adminService.restoreDB(fc.getSelectedFile().getAbsolutePath());
+                        JOptionPane.showMessageDialog(this, "Restore Successful!");
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                    }
+                }
+            }
+        });
+
+        dbPanel.add(backupBtn);
+        dbPanel.add(Box.createHorizontalStrut(10));
+        dbPanel.add(restoreBtn);
+
+        // Add everything to main panel
+        panel.add(maintPanel);
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(dbPanel);
+        panel.add(Box.createVerticalGlue()); // Push everything up
+
         return panel;
     }
 
