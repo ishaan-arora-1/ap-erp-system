@@ -37,8 +37,24 @@ public class LoginScreen extends JFrame {
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        usernameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        userField.setMaximumSize(new Dimension(300, 30));
+        userField.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        passField.setMaximumSize(new Dimension(300, 30));
+        passField.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JButton loginBtn = new JButton("Login");
         loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loginBtn.setPreferredSize(new Dimension(120, 35));
+        loginBtn.setMaximumSize(new Dimension(120, 35));
         loginBtn.putClientProperty("JButton.buttonType", "roundRect");
         loginBtn.addActionListener(e -> handleLogin());
 
@@ -46,10 +62,12 @@ public class LoginScreen extends JFrame {
 
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(30));
-        panel.add(new JLabel("Username:"));
+        panel.add(usernameLabel);
+        panel.add(Box.createVerticalStrut(5));
         panel.add(userField);
         panel.add(Box.createVerticalStrut(15));
-        panel.add(new JLabel("Password:"));
+        panel.add(passwordLabel);
+        panel.add(Box.createVerticalStrut(5));
         panel.add(passField);
         panel.add(Box.createVerticalStrut(30));
         panel.add(loginBtn);
