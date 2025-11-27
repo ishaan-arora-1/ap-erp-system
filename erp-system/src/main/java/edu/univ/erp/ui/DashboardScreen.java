@@ -9,24 +9,44 @@ import edu.univ.erp.domain.UserRole;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * DashboardScreen - Main application screen after successful login
+ * 
+ * Features:
+ * - Role-based UI: Shows AdminPanel, InstructorPanel, or StudentPanel based on user role
+ * - Maintenance mode banner: Displays warning when system is in maintenance mode
+ * - Header with: Welcome message, Notifications, Change Password, and Logout buttons
+ * - Session validation: Redirects to login if session expired
+ * 
+ * Layout Structure:
+ * - NORTH: Header panel (welcome + action buttons)
+ * - CENTER: Role-specific panel (Admin/Instructor/Student)
+ * - SOUTH: Maintenance mode banner (if applicable)
+ */
 public class DashboardScreen extends JFrame {
 
+    // Service for password changes
     private final AuthService authService = new AuthService();
 
     public DashboardScreen() {
+        // Session validation - ensure user is still logged in
         User user = SessionManager.getCurrentUser();
         if (user == null) {
+            // Session expired or no user - redirect to login
             dispose();
             new LoginScreen().setVisible(true);
             return;
         }
 
+        // Window configuration
         setTitle("University ERP - " + user.getRole() + ": " + user.getUsername());
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(null);  // Center on screen
         setLayout(new BorderLayout());
 
+        // Show maintenance mode banner if system is in maintenance (except for admin)
+        // Admin can still perform all actions even during maintenance
         if (AccessControl.isMaintenanceModeOn() && user.getRole() != UserRole.ADMIN) {
             JLabel banner = new JLabel("⚠️ SYSTEM UNDER MAINTENANCE - READ ONLY MODE ⚠️", SwingConstants.CENTER);
             banner.setOpaque(true);
@@ -37,6 +57,7 @@ public class DashboardScreen extends JFrame {
             add(banner, BorderLayout.SOUTH);
         }
 
+        // Header panel setup
         JPanel header = new JPanel(new BorderLayout());
         header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         header.add(new JLabel("Welcome, " + user.getUsername()), BorderLayout.WEST);
