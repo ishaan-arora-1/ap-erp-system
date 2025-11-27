@@ -17,7 +17,7 @@ public class AdminPanel extends JPanel {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Manage Users", createUserPanel());
         tabs.addTab("Manage Courses", createCoursePanel());
-        tabs.addTab("Manage Sections", createSectionPanel()); // <--- ADD THIS LINE
+        tabs.addTab("Manage Sections", createSectionPanel());
         tabs.addTab("System Settings", createSettingsPanel());
 
         add(tabs, BorderLayout.CENTER);
@@ -239,12 +239,10 @@ public class AdminPanel extends JPanel {
                 int instId = instructorIds.get(iIdx);
                 int cap = Integer.parseInt(capField.getText().trim());
 
-                // --- NEW: Validation ---
                 if (cap <= 0) {
                     JOptionPane.showMessageDialog(this, "Capacity must be a positive number.");
                     return;
                 }
-                // -----------------------
 
                 adminService.createSection(code, instId, 
                         timeField.getText().trim(), 

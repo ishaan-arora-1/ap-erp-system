@@ -17,7 +17,7 @@ public class InstructorPanel extends JPanel {
     private final JTable gradeTable;
     private final DefaultTableModel tableModel;
     private final List<String> sectionIds = new ArrayList<>();
-    private final JLabel statsLabel; // --- CHANGE: Field for stats
+    private final JLabel statsLabel;
 
     public InstructorPanel() {
         this.instructorService = new InstructorService();
@@ -51,7 +51,7 @@ public class InstructorPanel extends JPanel {
             }
         };
         gradeTable = new JTable(tableModel);
-        gradeTable.setAutoCreateRowSorter(true); // <--- ADD THIS LINE
+        gradeTable.setAutoCreateRowSorter(true);
         add(new JScrollPane(gradeTable), BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
@@ -75,13 +75,12 @@ public class InstructorPanel extends JPanel {
         saveBtn.setBackground(new Color(100, 200, 100));
         saveBtn.addActionListener(e -> saveGrades());
 
-        // --- CHANGE: Add stats label to bottom panel
         statsLabel = new JLabel("Class Average: N/A");
         statsLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         statsLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 20));
 
         bottomPanel.add(new JLabel("<html><i>Edit cells and click Save. OR Import CSV.</i></html>"));
-        bottomPanel.add(statsLabel); // Add label here
+        bottomPanel.add(statsLabel);
         bottomPanel.add(importBtn);
         bottomPanel.add(saveBtn);
         
@@ -125,7 +124,6 @@ public class InstructorPanel extends JPanel {
             List<Map<String, Object>> students =
                     instructorService.getClassList(Integer.parseInt(secId), SessionManager.getCurrentUser());
             
-            // --- CHANGE: Variables for average calculation
             double totalFinal = 0.0;
             int studentCount = 0;
 

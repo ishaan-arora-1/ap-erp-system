@@ -1,7 +1,7 @@
 package edu.univ.erp.ui;
 
 import edu.univ.erp.access.AccessControl;
-import edu.univ.erp.auth.AuthService; // Import this
+import edu.univ.erp.auth.AuthService;
 import edu.univ.erp.auth.SessionManager;
 import edu.univ.erp.domain.User;
 import edu.univ.erp.domain.UserRole;
@@ -11,7 +11,7 @@ import java.awt.*;
 
 public class DashboardScreen extends JFrame {
 
-    private final AuthService authService = new AuthService(); // Add this service
+    private final AuthService authService = new AuthService();
 
     public DashboardScreen() {
         User user = SessionManager.getCurrentUser();
@@ -27,7 +27,6 @@ public class DashboardScreen extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // --- CHANGE: Maintenance Banner Logic ---
         if (AccessControl.isMaintenanceModeOn() && user.getRole() != UserRole.ADMIN) {
             JLabel banner = new JLabel("⚠️ SYSTEM UNDER MAINTENANCE - READ ONLY MODE ⚠️", SwingConstants.CENTER);
             banner.setOpaque(true);
@@ -37,27 +36,22 @@ public class DashboardScreen extends JFrame {
             banner.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
             add(banner, BorderLayout.SOUTH);
         }
-        // ----------------------------------------
 
         JPanel header = new JPanel(new BorderLayout());
         header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         header.add(new JLabel("Welcome, " + user.getUsername()), BorderLayout.WEST);
 
-        // --- Header Buttons Panel ---
         JPanel headerBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        // --- NEW BUTTON: Notifications ---
         JButton notifBtn = new JButton("Notifications");
-        notifBtn.setBackground(new Color(255, 200, 100)); // Orange color
+        notifBtn.setBackground(new Color(255, 200, 100));
         notifBtn.addActionListener(e -> showNotifications());
         headerBtns.add(notifBtn);
 
-        // 1. Change Password Button
         JButton passBtn = new JButton("Change Password");
         passBtn.addActionListener(e -> showChangePasswordDialog());
         headerBtns.add(passBtn);
 
-        // 2. Logout Button
         JButton logoutBtn = new JButton("Logout");
         logoutBtn.addActionListener(e -> logout());
         headerBtns.add(logoutBtn);

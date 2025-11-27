@@ -190,14 +190,12 @@ public class AdminService {
         }
     }
 
-    // --- Backup & Restore Bonus ---
-
     public void backupDB(String filePath) throws Exception {
         String dbName = "univ_erp"; 
         String dbUser = "root";
-        String dbPass = "Punya@52"; // Matches your DatabaseFactory config
+        
+        String dbPass = System.getProperty("db.password", "Punya@52");
 
-        // --- CHANGE: Removed hardcoded path ---
         String mysqldumpCmd = "mysqldump";
 
         // Command: mysqldump -u root -pPunya@52 --set-gtid-purged=OFF --databases univ_erp -r "path/to/file.sql"
@@ -238,9 +236,9 @@ public class AdminService {
 
     public void restoreDB(String filePath) throws Exception {
         String dbUser = "root";
-        String dbPass = "Punya@52";
+        
+        String dbPass = System.getProperty("db.password", "Punya@52");
 
-        // --- CHANGE: Removed hardcoded path ---
         String mysqlCmd = "mysql";
 
         // Command: mysql -u root -pPunya@52 < "path/to/file.sql"

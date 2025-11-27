@@ -65,7 +65,6 @@ public class StudentService {
             ensureCapacity(conn, sectionId);
             insertEnrollment(conn, student.getUserId(), sectionId);
 
-            // --- NEW LINE ---
             notify(student, "Registered for Section ID: " + sectionId);
         } catch (SQLException e) {
             throw new Exception("Database Error: " + e.getMessage(), e);
@@ -77,13 +76,10 @@ public class StudentService {
             throw new Exception("System is under maintenance.");
         }
 
-        // --- NEW: Drop Deadline Check ---
-        // Hardcoded deadline: Dec 31, 2025. You can change this date.
         java.time.LocalDateTime deadline = java.time.LocalDateTime.of(2025, 12, 31, 23, 59);
         if (java.time.LocalDateTime.now().isAfter(deadline)) {
             throw new Exception("The drop deadline (" + deadline.toLocalDate() + ") has passed.");
         }
-        // --------------------------------
 
         try (Connection conn = DatabaseFactory.getErpConnection()) {
             // First, get the enrollment_id
@@ -115,7 +111,6 @@ public class StudentService {
                 stmt.executeUpdate();
             }
 
-            // --- NEW LINE ---
             notify(student, "Dropped Section ID: " + sectionId);
         } catch (SQLException e) {
             throw new Exception("Database Error: " + e.getMessage(), e);

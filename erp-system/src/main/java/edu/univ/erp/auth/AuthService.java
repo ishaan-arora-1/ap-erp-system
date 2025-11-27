@@ -55,7 +55,6 @@ public class AuthService {
         }
     }
 
-    // --- NEW: Change Password Method ---
     public void changePassword(int userId, String oldPassword, String newPassword) throws Exception {
         try (Connection conn = DatabaseFactory.getAuthConnection()) {
             // 1. Verify Old Password
@@ -85,7 +84,6 @@ public class AuthService {
         }
     }
 
-    // --- Helper Methods ---
     private void incrementFailedAttempts(Connection conn, int userId) {
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE users_auth SET failed_attempts = failed_attempts + 1 WHERE user_id = ?")) {
             stmt.setInt(1, userId);

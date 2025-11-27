@@ -15,7 +15,7 @@ Before running the application, you must initialize the database.
 
 **Default Credentials used in Code:**
 - **User:** `root`
-- **Password:** `Punya@52` (See `src/main/java/edu/univ/erp/data/DatabaseFactory.java` to change this if needed).
+- **Password:** `Punya@52` (default fallback - see below for custom password instructions)
 
 The script creates two databases (`univ_auth`, `univ_erp`) and inserts sample users:
 - **Admin:** `admin1` / `password`
@@ -30,7 +30,24 @@ To use the **Backup & Restore** features, ensure that the MySQL tools are access
 ## 3. Running the Application
 **From the project root (`ap-erp-system/`), navigate to the `erp-system` directory:**
 
+### Option 1: Using Default Password (Punya@52)
 ```bash
 cd erp-system
 mvn clean compile
 mvn exec:java -Dexec.mainClass="edu.univ.erp.Main"
+```
+
+### Option 2: Using a Custom MySQL Password
+If you have a different MySQL password (e.g., 'password' or empty), pass the `-Ddb.password` flag:
+
+```bash
+# Example: Password is "mySecretPass"
+mvn clean compile
+mvn exec:java -Dexec.mainClass="edu.univ.erp.Main" -Ddb.password="mySecretPass"
+
+# Example: No password (empty)
+mvn clean compile
+mvn exec:java -Dexec.mainClass="edu.univ.erp.Main" -Ddb.password=""
+```
+
+**Note:** Ensure `mysql` and `mysqldump` are in your System PATH for Backup/Restore features.

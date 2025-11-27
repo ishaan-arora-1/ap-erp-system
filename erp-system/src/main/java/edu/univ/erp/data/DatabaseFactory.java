@@ -31,8 +31,11 @@ public final class DatabaseFactory {
         try {
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl("jdbc:mysql://localhost:3306/univ_auth");
-            config.setUsername("root"); // TODO: set to local DB user
-            config.setPassword("Punya@52"); // TODO: set to local DB password
+            config.setUsername("root");
+            
+            String pass = System.getProperty("db.password", "Punya@52");
+            config.setPassword(pass);
+            
             config.setMaximumPoolSize(5);
             authDataSource = new HikariDataSource(config);
             System.out.println("Auth database connection initialized successfully");
@@ -46,8 +49,11 @@ public final class DatabaseFactory {
         try {
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl("jdbc:mysql://localhost:3306/univ_erp");
-            config.setUsername("root"); // TODO: set to local DB user
-            config.setPassword("Punya@52"); // TODO: set to local DB password
+            config.setUsername("root");
+            
+            String pass = System.getProperty("db.password", "Punya@52");
+            config.setPassword(pass);
+            
             config.setMaximumPoolSize(10);
             erpDataSource = new HikariDataSource(config);
             System.out.println("ERP database connection initialized successfully");
