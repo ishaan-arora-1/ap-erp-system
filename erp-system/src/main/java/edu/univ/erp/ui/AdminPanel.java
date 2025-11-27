@@ -229,6 +229,13 @@ public class AdminPanel extends JPanel {
                 int instId = instructorIds.get(iIdx);
                 int cap = Integer.parseInt(capField.getText().trim());
 
+                // --- NEW: Validation ---
+                if (cap <= 0) {
+                    JOptionPane.showMessageDialog(this, "Capacity must be a positive number.");
+                    return;
+                }
+                // -----------------------
+
                 adminService.createSection(code, instId, 
                         timeField.getText().trim(), 
                         roomField.getText().trim(), 

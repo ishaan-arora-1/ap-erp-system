@@ -48,6 +48,7 @@ public class StudentPanel extends JPanel {
             }
         };
         catalogTable = new JTable(catalogModel);
+        catalogTable.setAutoCreateRowSorter(true); // <--- ADD THIS LINE
         panel.add(new JScrollPane(catalogTable), BorderLayout.CENTER);
 
         JButton regBtn = new JButton("Register for Selected");
@@ -88,6 +89,7 @@ public class StudentPanel extends JPanel {
             }
         };
         myTable = new JTable(myModel);
+        myTable.setAutoCreateRowSorter(true); // <--- ADD THIS LINE
         panel.add(new JScrollPane(myTable), BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel();

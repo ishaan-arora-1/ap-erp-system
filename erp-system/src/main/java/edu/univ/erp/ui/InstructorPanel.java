@@ -51,6 +51,7 @@ public class InstructorPanel extends JPanel {
             }
         };
         gradeTable = new JTable(tableModel);
+        gradeTable.setAutoCreateRowSorter(true); // <--- ADD THIS LINE
         add(new JScrollPane(gradeTable), BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
@@ -175,6 +176,15 @@ public class InstructorPanel extends JPanel {
                 double quiz = Double.parseDouble(tableModel.getValueAt(i, 3).toString());
                 double midterm = Double.parseDouble(tableModel.getValueAt(i, 4).toString());
                 double endsem = Double.parseDouble(tableModel.getValueAt(i, 5).toString());
+
+                // --- NEW: Validation ---
+                if (quiz < 0 || midterm < 0 || endsem < 0) {
+                    throw new Exception("Scores cannot be negative.");
+                }
+                if (quiz > 20 || midterm > 30 || endsem > 50) {
+                    throw new Exception("Score exceeds maximum for that component (Quiz: 20, Midterm: 30, EndSem: 50).");
+                }
+                // -----------------------
 
                 instructorService.saveGrade(enrollId, "Quiz", quiz);
                 instructorService.saveGrade(enrollId, "Midterm", midterm);
