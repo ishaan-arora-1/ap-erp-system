@@ -102,13 +102,13 @@ INSERT INTO settings (setting_key, setting_value) VALUES ('maintenance_on', 'fal
 -- ==========================================
 
 -- A. Users (Password is 'password' for everyone)
--- Hash: $2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRkgVduWkyvM7qmIv2p8e.0TbK2 is BCrypt hash for 'password'
+-- Hash: $2a$10$13zqR9bFg81RgccFQVW7F.KQi0Pt9f38wPuY7su1rqbSI8CEKXQ9S is BCrypt hash for 'password'
 USE univ_auth;
 INSERT INTO users_auth (username, role, password_hash) VALUES 
-('admin1', 'ADMIN', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRkgVduWkyvM7qmIv2p8e.0TbK2'),
-('inst1', 'INSTRUCTOR', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRkgVduWkyvM7qmIv2p8e.0TbK2'),
-('stu1', 'STUDENT', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRkgVduWkyvM7qmIv2p8e.0TbK2'),
-('stu2', 'STUDENT', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRkgVduWkyvM7qmIv2p8e.0TbK2');
+('admin1', 'ADMIN', '$2a$10$13zqR9bFg81RgccFQVW7F.KQi0Pt9f38wPuY7su1rqbSI8CEKXQ9S'),
+('inst1', 'INSTRUCTOR', '$2a$10$13zqR9bFg81RgccFQVW7F.KQi0Pt9f38wPuY7su1rqbSI8CEKXQ9S'),
+('stu1', 'STUDENT', '$2a$10$13zqR9bFg81RgccFQVW7F.KQi0Pt9f38wPuY7su1rqbSI8CEKXQ9S'),
+('stu2', 'STUDENT', '$2a$10$13zqR9bFg81RgccFQVW7F.KQi0Pt9f38wPuY7su1rqbSI8CEKXQ9S');
 
 -- NOTE: All users have password 'password' (without quotes)
 -- If you need to generate a new hash, use: BCrypt.hashpw("password", BCrypt.gensalt())
@@ -118,11 +118,11 @@ INSERT INTO users_auth (username, role, password_hash) VALUES
 USE univ_erp;
 
 INSERT INTO instructors (user_id, full_name, department) VALUES 
-(2, 'Dr. Alice Smith', 'Computer Science');
+(2, 'Dr. Ram', 'Computer Science');
 
 INSERT INTO students (user_id, full_name, roll_no, year) VALUES 
-(3, 'Bob Jones', '2023001', 2023),
-(4, 'Charlie Brown', '2023002', 2023);
+(3, 'Ishaan', '2024266', 2023),
+(4, 'Madhav', '2025323', 2023);
 
 -- C. Courses & Sections
 INSERT INTO courses (course_code, title, credits) VALUES 
@@ -146,4 +146,3 @@ INSERT INTO enrollments (student_id, section_id) VALUES (3, 1);
 --   Student 1:  username='stu1'    password='password'
 --   Student 2:  username='stu2'    password='password'
 -- ==========================================
-

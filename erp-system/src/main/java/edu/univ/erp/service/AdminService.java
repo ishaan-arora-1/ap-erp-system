@@ -121,6 +121,21 @@ public class AdminService {
         }
     }
 
+    public boolean isMaintenanceMode() throws Exception {
+        try (Connection conn = DatabaseFactory.getErpConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT setting_value FROM settings WHERE setting_key = 'maintenance_on'")) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Boolean.parseBoolean(rs.getString("setting_value"));
+                }
+                return false;
+            }
+        } catch (SQLException e) {
+            throw new Exception("Database Error: " + e.getMessage(), e);
+        }
+    }
+
     // 1. Helper to fetch all courses for the dropdown
     public List<Map<String, String>> getAllCourses() throws Exception {
         List<Map<String, String>> list = new ArrayList<>();

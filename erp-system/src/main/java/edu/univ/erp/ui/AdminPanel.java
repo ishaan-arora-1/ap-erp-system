@@ -112,6 +112,16 @@ public class AdminPanel extends JPanel {
         JPanel maintPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JCheckBox maintToggle = new JCheckBox("Enable Maintenance Mode");
         maintToggle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        // Load current maintenance mode state from database
+        try {
+            boolean currentState = adminService.isMaintenanceMode();
+            maintToggle.setSelected(currentState);
+        } catch (Exception ex) {
+            // If we can't load the state, default to unchecked
+            maintToggle.setSelected(false);
+        }
+        
         maintToggle.addActionListener(e -> {
             try {
                 adminService.setMaintenanceMode(maintToggle.isSelected());
@@ -174,7 +184,7 @@ public class AdminPanel extends JPanel {
     }
 
     private JPanel createSectionPanel() {
-        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
 
         // Form Components
