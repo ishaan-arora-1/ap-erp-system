@@ -2,6 +2,10 @@
 -- University ERP Setup Script
 -- ==========================================
 
+-- 1. Reset Databases (Clear old data)
+DROP DATABASE IF EXISTS univ_auth;
+DROP DATABASE IF EXISTS univ_erp;
+
 -- 1. Create Databases
 CREATE DATABASE IF NOT EXISTS univ_auth;
 CREATE DATABASE IF NOT EXISTS univ_erp;
