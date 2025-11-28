@@ -23,7 +23,8 @@ CREATE TABLE users_auth (
     password_hash VARCHAR(255) NOT NULL,
     status VARCHAR(20) DEFAULT 'ACTIVE',
     last_login DATETIME,
-    failed_attempts INT DEFAULT 0
+    failed_attempts INT DEFAULT 0,
+    lockout_until DATETIME NULL -- Account locked until this time (NULL = not locked)
 );
 
 -- ==========================================
