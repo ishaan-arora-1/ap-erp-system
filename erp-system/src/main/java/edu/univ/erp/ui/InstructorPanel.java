@@ -224,7 +224,7 @@ public class InstructorPanel extends JPanel {
         return wrapper;
     }
 
-    // --- LOGIC (Preserved) ---
+    // --- LOGIC ---
 
     private void loadSections() {
         sectionSelector.removeAllItems();

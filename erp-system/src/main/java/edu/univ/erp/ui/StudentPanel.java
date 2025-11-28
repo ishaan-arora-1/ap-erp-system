@@ -21,7 +21,6 @@ import java.util.Map;
  * - Left Sidebar Navigation
  * - Dedicated "Academic Record" tab for transcripts
  * - Modern tables with sorting
- * - Preserves all logic (Drop deadlines, Registration checks)
  */
 public class StudentPanel extends JPanel {
 
