@@ -43,6 +43,8 @@ Make sure your MySQL server is running on `localhost:3306`.
 
 You have **two options** for setting up the database:
 
+**Recommendation**: Option 2 (Test Pack) provides a more comprehensive testing environment.
+
 #### Option 1: Basic Setup (Recommended for First-Time Users)
 
 The `setup.sql` script provides minimal data for quick testing:

@@ -1,9 +1,11 @@
 package edu.univ.erp.ui;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import edu.univ.erp.auth.SessionManager;
 import edu.univ.erp.service.InstructorService;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -11,146 +13,234 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * InstructorPanel - UI for instructors to manage their sections and grades
+ * InstructorPanel - Modern Sidebar Layout
  * 
  * Features:
- * - View all assigned sections in dropdown
- * - Display class list for selected section
- * - Edit grades directly in table (Quiz, Midterm, EndSem)
- * - Automatic final grade calculation (20% + 30% + 50%)
- * - Real-time class average calculation
- * - CSV import for bulk grade entry
- * - Input validation (negative values, max score limits)
- * - Sortable table columns for easy data viewing
- * 
- * Layout:
- * - NORTH: Section selector dropdown + Refresh button
- * - CENTER: Editable grade table
- * - SOUTH: Stats label + Import CSV + Save Grades buttons
+ * - Dedicated Gradebook view with integrated stats
+ * - "Bulk Tools" tab for CSV import
+ * - Auto-calc averages and validations intact
  */
 public class InstructorPanel extends JPanel {
 
-    // Service layer for business logic
     private final InstructorService instructorService;
-    
-    // UI Components
-    private final JComboBox<String> sectionSelector;  // Dropdown to choose section
-    private final JTable gradeTable;                  // Editable table with student grades
-    private final DefaultTableModel tableModel;       // Table data model
-    private final List<String> sectionIds = new ArrayList<>();  // Hidden section IDs (parallel to dropdown display)
-    private final JLabel statsLabel;                  // Shows class average
+    private final CardLayout contentLayout = new CardLayout();
+    private final JPanel contentPanel = new JPanel(contentLayout);
+
+    // UI Colors
+    private final Color SIDEBAR_BG = new Color(45, 48, 65);
+    private final Color SIDEBAR_HOVER = new Color(65, 68, 85);
+    private final Color ACCENT_COLOR = new Color(100, 150, 255);
+
+    // Gradebook Components
+    private JComboBox<String> sectionSelector;
+    private JTable gradeTable;
+    private DefaultTableModel tableModel;
+    private List<String> sectionIds = new ArrayList<>();
+    private JLabel statsLabel;
 
     public InstructorPanel() {
         this.instructorService = new InstructorService();
         setLayout(new BorderLayout());
 
-        // Top panel: Section selector and refresh button
+        // 1. Sidebar
+        add(createSidebar(), BorderLayout.WEST);
+
+        // 2. Content
+        contentPanel.add(createGradebookPanel(), "GRADEBOOK");
+        contentPanel.add(createToolsPanel(), "TOOLS");
+
+        contentPanel.setBackground(new Color(245, 247, 250));
+        contentPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
+        add(contentPanel, BorderLayout.CENTER);
+
+        // Load data initially
+        loadSections();
+    }
+
+    private JPanel createSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBackground(SIDEBAR_BG);
+        sidebar.setPreferredSize(new Dimension(220, 600));
+        sidebar.setBorder(new EmptyBorder(20, 10, 20, 10));
+
+        JLabel title = new JLabel("INSTRUCTOR PORTAL");
+        title.setForeground(new Color(150, 155, 170));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        sidebar.add(title);
+        sidebar.add(Box.createVerticalStrut(15));
+
+        sidebar.add(createNavButton("Gradebook", "GRADEBOOK"));
+        sidebar.add(Box.createVerticalStrut(5));
+        sidebar.add(createNavButton("Bulk Tools", "TOOLS"));
+
+        return sidebar;
+    }
+
+    private JButton createNavButton(String text, String cardName) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(SIDEBAR_BG);
+        btn.setBorder(new EmptyBorder(10, 15, 10, 15));
+        btn.setFocusPainted(false);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setMaximumSize(new Dimension(200, 40));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(SIDEBAR_HOVER); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(SIDEBAR_BG); }
+        });
+
+        btn.addActionListener(e -> {
+            contentLayout.show(contentPanel, cardName);
+            if (cardName.equals("GRADEBOOK")) loadSections();
+        });
+        return btn;
+    }
+
+    // --- PANEL 1: GRADEBOOK ---
+    private JPanel createGradebookPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.putClientProperty(FlatClientProperties.STYLE, "arc: 15");
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        // Top Control Bar
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.setOpaque(false);
         topPanel.add(new JLabel("Select Section:"));
 
-        // Dropdown to select which section to view/grade
         sectionSelector = new JComboBox<>();
-        sectionSelector.addActionListener(e -> loadStudentList());  // Load students when selection changes
+        sectionSelector.setPreferredSize(new Dimension(250, 30));
+        sectionSelector.addActionListener(e -> loadStudentList());
         topPanel.add(sectionSelector);
 
-        // Manual refresh button to reload section list
         JButton refreshBtn = new JButton("Refresh");
+        refreshBtn.putClientProperty(FlatClientProperties.STYLE, "arc: 10");
         refreshBtn.addActionListener(e -> loadSections());
         topPanel.add(refreshBtn);
 
-        add(topPanel, BorderLayout.NORTH);
+        panel.add(topPanel, BorderLayout.NORTH);
 
-        // Grade table setup with 7 columns
+        // Grade Table
         String[] cols = {"EnrollID", "Student Name", "Roll No", "Quiz (20)", "Midterm (30)", "EndSem (50)", "Final Grade"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                // Only grade columns (3, 4, 5) are editable
-                // EnrollID, name, roll, and final grade are read-only
-                return col >= 3 && col <= 5;
+                return col >= 3 && col <= 5; // Only grades are editable
             }
-            
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                // Set data type for proper rendering and sorting
-                if (columnIndex >= 3 && columnIndex <= 5) {
-                    return Double.class;  // Grade columns are numeric
+                // EnrollID (0) is Integer, Quiz/Midterm/EndSem (3-5) are Double, Final Grade (6) is Double
+                if (columnIndex == 0) {
+                    return Integer.class;
+                }
+                if (columnIndex >= 3 && columnIndex <= 6) {
+                    return Double.class;
                 }
                 return String.class;
             }
         };
         
         gradeTable = new JTable(tableModel);
-        gradeTable.setAutoCreateRowSorter(true);  // Enable column sorting by clicking header
-        add(new JScrollPane(gradeTable), BorderLayout.CENTER);
-
-        JPanel bottomPanel = new JPanel();
+        gradeTable.setRowHeight(30);
+        gradeTable.setAutoCreateRowSorter(true);
         
-        JButton importBtn = new JButton("Import CSV");
-        importBtn.setBackground(new Color(100, 150, 255));
+        // Enhanced header styling for easier sorting
+        gradeTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        gradeTable.getTableHeader().setPreferredSize(new Dimension(0, 40)); // Taller header for easier clicking
+        gradeTable.getTableHeader().setReorderingAllowed(false); // Prevent accidental column dragging
+        panel.add(new JScrollPane(gradeTable), BorderLayout.CENTER);
+
+        // Bottom Stats & Save
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setOpaque(false);
+        bottomPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
+
+        statsLabel = new JLabel("Class Average: N/A");
+        statsLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        statsLabel.setForeground(new Color(80, 80, 80));
+
+        JButton saveBtn = createPrimaryButton("Save All Grades");
+        saveBtn.addActionListener(e -> saveGrades());
+
+        bottomPanel.add(statsLabel, BorderLayout.WEST);
+        bottomPanel.add(saveBtn, BorderLayout.EAST);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    // --- PANEL 2: BULK TOOLS ---
+    private JPanel createToolsPanel() {
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        wrapper.setOpaque(false); // Transparent to show parent gray bg
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        panel.putClientProperty(FlatClientProperties.STYLE, "arc: 15");
+        panel.setBorder(new EmptyBorder(40, 40, 40, 40));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0; gbc.insets = new Insets(10, 0, 10, 0);
+
+        JLabel title = new JLabel("Bulk Grade Import");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        panel.add(title, gbc);
+
+        gbc.gridy++;
+        JTextArea desc = new JTextArea(
+            "Upload a CSV file to bulk import grades.\n" +
+            "Expected format: EnrollmentID, Quiz, Midterm, EndSem\n" +
+            "This will overwrite existing grades for matching IDs."
+        );
+        desc.setEditable(false);
+        desc.setOpaque(false);
+        desc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        panel.add(desc, gbc);
+
+        gbc.gridy++;
+        JButton importBtn = createPrimaryButton("Select CSV File");
+        importBtn.setPreferredSize(new Dimension(200, 40));
         importBtn.addActionListener(e -> {
             JFileChooser fc = new JFileChooser();
             if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 try {
                     instructorService.importGradesFromCSV(fc.getSelectedFile());
-                    JOptionPane.showMessageDialog(this, "Grades Imported Successfully!");
-                    loadStudentList();
+                    JOptionPane.showMessageDialog(this, "Grades imported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    loadStudentList(); // Refresh table data if we switch back
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Import Failed", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
-        
-        JButton saveBtn = new JButton("Save Grades");
-        saveBtn.setBackground(new Color(100, 200, 100));
-        saveBtn.addActionListener(e -> saveGrades());
+        panel.add(importBtn, gbc);
 
-        statsLabel = new JLabel("Class Average: N/A");
-        statsLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        statsLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 20));
-
-        bottomPanel.add(new JLabel("<html><i>Edit cells and click Save. OR Import CSV.</i></html>"));
-        bottomPanel.add(statsLabel);
-        bottomPanel.add(importBtn);
-        bottomPanel.add(saveBtn);
-        
-        add(bottomPanel, BorderLayout.SOUTH);
-        
-        loadSections();
+        wrapper.add(panel);
+        return wrapper;
     }
 
-    /**
-     * Load instructor's assigned sections into dropdown
-     * 
-     * Fetches all sections assigned to the current instructor from database
-     * Populates both the visible dropdown (course code + time) 
-     * and hidden sectionIds list (for database queries)
-     */
+    // --- LOGIC (Preserved) ---
+
     private void loadSections() {
         sectionSelector.removeAllItems();
         sectionIds.clear();
-        
         try {
-            // Get sections assigned to this instructor
             List<Map<String, String>> sections = instructorService.getMySections(SessionManager.getCurrentUser());
-            
-            // Populate dropdown and parallel ID list
             for (Map<String, String> s : sections) {
-                sectionSelector.addItem(s.get("display"));  // e.g., "CS101 (Mon/Wed 10:00)"
-                sectionIds.add(s.get("id"));                // e.g., "1"
+                sectionSelector.addItem(s.get("display"));
+                sectionIds.add(s.get("id"));
             }
-            
-            // Auto-select first section if any exist
             if (sectionSelector.getItemCount() > 0) {
-                sectionSelector.setSelectedIndex(0);  // This triggers loadStudentList()
+                sectionSelector.setSelectedIndex(0);
             } else {
-                // No sections assigned - clear table
                 tableModel.setRowCount(0);
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to load sections: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void loadStudentList() {
@@ -165,11 +255,9 @@ public class InstructorPanel extends JPanel {
         tableModel.setRowCount(0);
 
         try {
-            List<Map<String, Object>> students =
-                    instructorService.getClassList(Integer.parseInt(secId), SessionManager.getCurrentUser());
-            
+            List<Map<String, Object>> students = instructorService.getClassList(Integer.parseInt(secId), SessionManager.getCurrentUser());
             double totalFinal = 0.0;
-            int studentCount = 0;
+            int count = 0;
 
             for (Map<String, Object> s : students) {
                 double quiz = s.containsKey("Quiz") ? (Double) s.get("Quiz") : 0.0;
@@ -177,95 +265,58 @@ public class InstructorPanel extends JPanel {
                 double end = s.containsKey("EndSem") ? (Double) s.get("EndSem") : 0.0;
                 double finalGrade = (quiz * 0.2) + (mid * 0.3) + (end * 0.5);
 
-                // Accumulate sum
                 totalFinal += finalGrade;
-                studentCount++;
+                count++;
 
                 tableModel.addRow(new Object[]{
-                        s.get("enrollment_id"),
+                        Integer.parseInt(s.get("enrollment_id").toString()), // EnrollID as Integer
                         s.get("name"),
                         s.get("roll"),
                         quiz,
                         mid,
                         end,
-                        String.format("%.2f", finalGrade)
+                        finalGrade // Final Grade as Double for proper numeric sorting
                 });
             }
+            
+            if (count > 0) statsLabel.setText(String.format("Class Average: %.2f", totalFinal / count));
+            else statsLabel.setText("Class Average: 0.00");
 
-            // --- CHANGE: Update the stats label
-            if (studentCount > 0) {
-                double avg = totalFinal / studentCount;
-                statsLabel.setText(String.format("Class Average: %.2f", avg));
-            } else {
-                statsLabel.setText("Class Average: 0.00");
-            }
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error loading students: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
-    /**
-     * Save all grades in the table to database
-     * 
-     * Process:
-     * 1. Stop any active cell editing
-     * 2. Iterate through all rows in table
-     * 3. Validate grades (non-negative, within max limits)
-     * 4. Save each grade component to database
-     * 5. Reload table to show updated final grades and averages
-     * 
-     * Validation Rules:
-     * - No negative scores
-     * - Quiz max: 20 points
-     * - Midterm max: 30 points
-     * - EndSem max: 50 points
-     */
     private void saveGrades() {
-        // If user is currently editing a cell, commit the edit
-        if (gradeTable.isEditing()) {
-            gradeTable.getCellEditor().stopCellEditing();
-        }
+        if (gradeTable.isEditing()) gradeTable.getCellEditor().stopCellEditing();
 
-        int rowCount = tableModel.getRowCount();
         try {
-            // Save grades for each student
-            for (int i = 0; i < rowCount; i++) {
-                // Extract data from table row
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
                 int enrollId = Integer.parseInt(tableModel.getValueAt(i, 0).toString());
                 double quiz = Double.parseDouble(tableModel.getValueAt(i, 3).toString());
                 double midterm = Double.parseDouble(tableModel.getValueAt(i, 4).toString());
                 double endsem = Double.parseDouble(tableModel.getValueAt(i, 5).toString());
 
-                // Validate: no negative scores
-                if (quiz < 0 || midterm < 0 || endsem < 0) {
-                    throw new Exception("Scores cannot be negative.");
-                }
-                
-                // Validate: scores within maximum limits
-                if (quiz > 20 || midterm > 30 || endsem > 50) {
-                    throw new Exception("Score exceeds maximum for that component (Quiz: 20, Midterm: 30, EndSem: 50).");
-                }
+                if (quiz < 0 || midterm < 0 || endsem < 0) throw new Exception("Scores cannot be negative.");
+                if (quiz > 20 || midterm > 30 || endsem > 50) throw new Exception("Score exceeds limits (20/30/50).");
 
-                // Save each grade component separately
-                // This allows partial grades (e.g., only Quiz entered so far)
                 instructorService.saveGrade(enrollId, "Quiz", quiz);
                 instructorService.saveGrade(enrollId, "Midterm", midterm);
                 instructorService.saveGrade(enrollId, "EndSem", endsem);
             }
-            
-            JOptionPane.showMessageDialog(this, "Grades Saved Successfully!");
-            // Reload to recalculate final grades and class average
+            JOptionPane.showMessageDialog(this, "All grades have been saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             loadStudentList();
         } catch (NumberFormatException nfe) {
-            // User entered non-numeric value
-            JOptionPane.showMessageDialog(this, "Please enter valid numeric scores.",
-                    "Input Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter valid numbers in all grade fields.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
-            // Validation error or database error
-            JOptionPane.showMessageDialog(this, "Error saving grades: " + e.getMessage(),
-                    "Save Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save Failed", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private JButton createPrimaryButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(ACCENT_COLOR);
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.putClientProperty(FlatClientProperties.STYLE, "arc: 10; borderWidth: 0");
+        return btn;
     }
 }

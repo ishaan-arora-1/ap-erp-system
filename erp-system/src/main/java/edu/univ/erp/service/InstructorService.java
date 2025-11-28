@@ -34,7 +34,7 @@ public class InstructorService {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
         return sections;
     }
@@ -75,7 +75,7 @@ public class InstructorService {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
         return new ArrayList<>(tempMap.values());
     }
@@ -101,7 +101,7 @@ public class InstructorService {
                 insStmt.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
     }
 

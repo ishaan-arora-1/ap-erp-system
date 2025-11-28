@@ -50,7 +50,7 @@ public class StudentService {
                 catalog.add(row);
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to load course catalog. Please try again.");
         }
         return catalog;
     }
@@ -65,10 +65,41 @@ public class StudentService {
             ensureCapacity(conn, sectionId);
             insertEnrollment(conn, student.getUserId(), sectionId);
 
-            notify(student, "Registered for Section ID: " + sectionId);
+            // Get course name for notification
+            String courseName = getCourseName(conn, sectionId);
+            notify(student, "Registered for course: " + courseName);
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete registration. Please try again.");
         }
+    }
+    
+    private String getCourseName(Connection conn, int sectionId) throws SQLException {
+        String sql = "SELECT c.course_code, c.title FROM sections s JOIN courses c ON s.course_code = c.course_code WHERE s.section_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, sectionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("course_code") + " - " + rs.getString("title");
+                }
+            }
+        }
+        return "Unknown Course";
+    }
+    
+    private java.time.LocalDate getSectionDropDeadline(Connection conn, int sectionId) throws SQLException {
+        String sql = "SELECT drop_deadline FROM sections WHERE section_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, sectionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    java.sql.Date sqlDate = rs.getDate("drop_deadline");
+                    if (sqlDate != null) {
+                        return sqlDate.toLocalDate();
+        }
+                }
+            }
+        }
+        return null; // No deadline set means no restriction
     }
 
     public void drop(User student, int sectionId) throws Exception {
@@ -76,12 +107,16 @@ public class StudentService {
             throw new Exception("System is under maintenance.");
         }
 
-        java.time.LocalDateTime deadline = java.time.LocalDateTime.of(2025, 12, 31, 23, 59);
-        if (java.time.LocalDateTime.now().isAfter(deadline)) {
-            throw new Exception("The drop deadline (" + deadline.toLocalDate() + ") has passed.");
-        }
-
         try (Connection conn = DatabaseFactory.getErpConnection()) {
+            // Check section-specific drop deadline
+            java.time.LocalDate deadline = getSectionDropDeadline(conn, sectionId);
+            if (deadline != null && java.time.LocalDate.now().isAfter(deadline)) {
+                throw new Exception("The drop deadline (" + deadline + ") has passed for this course.");
+            }
+            
+            // Get course name for notification before dropping
+            String courseName = getCourseName(conn, sectionId);
+            
             // First, get the enrollment_id
             int enrollmentId = -1;
             String findEnrollment = "SELECT enrollment_id FROM enrollments WHERE student_id = ? AND section_id = ?";
@@ -111,16 +146,16 @@ public class StudentService {
                 stmt.executeUpdate();
             }
 
-            notify(student, "Dropped Section ID: " + sectionId);
+            notify(student, "Dropped course: " + courseName);
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to drop this course. Please try again.");
         }
     }
 
     public List<Map<String, String>> getMySections(User student) throws Exception {
         List<Map<String, String>> list = new ArrayList<>();
         String sql = """
-            SELECT s.section_id, c.course_code, c.title, i.full_name, s.days_times, s.room
+            SELECT s.section_id, c.course_code, c.title, i.full_name, s.days_times, s.room, s.drop_deadline
             FROM enrollments e
             JOIN sections s ON e.section_id = s.section_id
             JOIN courses c ON s.course_code = c.course_code
@@ -138,11 +173,20 @@ public class StudentService {
                     row.put("display", rs.getString("course_code") + ": " + rs.getString("title"));
                     row.put("info", rs.getString("days_times") + " (" + rs.getString("room") + ")");
                     row.put("instructor", rs.getString("full_name"));
+                    
+                    // Format drop deadline
+                    java.sql.Date deadline = rs.getDate("drop_deadline");
+                    if (deadline != null) {
+                        row.put("deadline", deadline.toString());
+                    } else {
+                        row.put("deadline", "No deadline");
+                    }
+                    
                     list.add(row);
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to load your schedule. Please refresh and try again.");
         }
         return list;
     }
@@ -167,7 +211,7 @@ public class StudentService {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to load grades. Please try again.");
         }
         return grades;
     }
@@ -249,7 +293,7 @@ public class StudentService {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to load transcript data. Please try again.");
         }
         return transcript;
     }

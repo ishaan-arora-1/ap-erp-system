@@ -108,7 +108,7 @@ public class AuthService {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new Exception("Database error during login.", e);
+            throw new Exception("Unable to sign in. Please try again later.");
         }
     }
 
@@ -152,7 +152,7 @@ public class AuthService {
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to change password. Please try again.");
         }
     }
 

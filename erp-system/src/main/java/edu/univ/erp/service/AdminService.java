@@ -50,7 +50,7 @@ public class AdminService {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         } finally {
             if (generatedKeys != null) {
                 try {
@@ -106,7 +106,7 @@ public class AdminService {
             stmt.setInt(3, credits);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
     }
 
@@ -117,7 +117,7 @@ public class AdminService {
             stmt.setString(1, String.valueOf(enable));
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
     }
 
@@ -132,7 +132,7 @@ public class AdminService {
                 return false;
             }
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
     }
 
@@ -175,8 +175,8 @@ public class AdminService {
     }
 
     // 3. The main method to create a section
-    public void createSection(String courseCode, int instructorId, String dayTime, String room, int capacity) throws Exception {
-        String sql = "INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES (?, ?, ?, ?, ?)";
+    public void createSection(String courseCode, int instructorId, String dayTime, String room, int capacity, java.time.LocalDate dropDeadline) throws Exception {
+        String sql = "INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseFactory.getErpConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, courseCode);
@@ -184,9 +184,10 @@ public class AdminService {
             stmt.setString(3, dayTime);
             stmt.setString(4, room);
             stmt.setInt(5, capacity);
+            stmt.setDate(6, java.sql.Date.valueOf(dropDeadline));
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new Exception("Database Error: " + e.getMessage(), e);
+            throw new Exception("Unable to complete operation. Please try again. " + e.getMessage(), e);
         }
     }
 

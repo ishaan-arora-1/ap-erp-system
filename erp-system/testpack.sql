@@ -63,6 +63,7 @@ CREATE TABLE sections (
     days_times VARCHAR(50),
     room VARCHAR(20),
     capacity INT,
+    drop_deadline DATE,
     FOREIGN KEY (course_code) REFERENCES courses(course_code),
     FOREIGN KEY (instructor_id) REFERENCES instructors(user_id)
 );
@@ -157,32 +158,42 @@ INSERT INTO courses (course_code, title, credits) VALUES
 ('ECE101', 'Digital Electronics', 3);
 
 -- E. Create Sections
+-- NOTE: Some sections have PAST deadlines for testing drop restrictions
+--       Students enrolled in sections with past deadlines will NOT be able to drop
+--       Sections with past deadlines: CS101 Section 1, CS201 Section 1
+
 -- CS101 has 2 sections
-INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES 
-('CS101', 2, 'Mon/Wed 10:00-11:30', 'Room A101', 40),
-('CS101', 3, 'Tue/Thu 14:00-15:30', 'Room A102', 40);
+-- Section 1: PAST deadline (for testing drop restriction)
+-- Section 2: Future deadline (drop allowed)
+INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES 
+('CS101', 2, 'Mon/Wed 10:00-11:30', 'Room A101', 40, '2024-11-01'),
+('CS101', 3, 'Tue/Thu 14:00-15:30', 'Room A102', 40, '2025-12-31');
 
 -- CS201 has 2 sections
-INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES 
-('CS201', 2, 'Mon/Wed 14:00-15:30', 'Room A103', 35),
-('CS201', 3, 'Tue/Thu 10:00-11:30', 'Room A104', 35);
+-- Section 1: PAST deadline (for testing)
+-- Section 2: Future deadline
+INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES 
+('CS201', 2, 'Mon/Wed 14:00-15:30', 'Room A103', 35, '2024-10-15'),
+('CS201', 3, 'Tue/Thu 10:00-11:30', 'Room A104', 35, '2025-12-31');
 
--- CS301 has 1 section
-INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES 
-('CS301', 2, 'Fri 10:00-13:00', 'Lab C201', 30);
+-- CS301 has 1 section (Future deadline)
+INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES 
+('CS301', 2, 'Fri 10:00-13:00', 'Lab C201', 30, '2025-12-31');
 
 -- MATH101 has 2 sections
-INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES 
-('MATH101', 4, 'Mon/Wed/Fri 9:00-10:00', 'Room B101', 50),
-('MATH101', 7, 'Tue/Thu 11:00-12:30', 'Room B102', 50);
+-- Section 1: Future deadline
+-- Section 2: Future deadline
+INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES 
+('MATH101', 4, 'Mon/Wed/Fri 9:00-10:00', 'Room B101', 50, '2026-03-15'),
+('MATH101', 7, 'Tue/Thu 11:00-12:30', 'Room B102', 50, '2026-03-15');
 
 -- PHY101 has 1 section
-INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES 
-('PHY101', 5, 'Mon/Wed 15:00-16:30', 'Room D101', 45);
+INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES 
+('PHY101', 5, 'Mon/Wed 15:00-16:30', 'Room D101', 45, '2025-12-31');
 
 -- ECE101 has 1 section
-INSERT INTO sections (course_code, instructor_id, days_times, room, capacity) VALUES 
-('ECE101', 6, 'Tue/Thu 13:00-14:30', 'Lab E101', 30);
+INSERT INTO sections (course_code, instructor_id, days_times, room, capacity, drop_deadline) VALUES 
+('ECE101', 6, 'Tue/Thu 13:00-14:30', 'Lab E101', 30, '2025-12-31');
 
 -- F. Create Enrollments
 -- Alice (user_id=8) - Full load, all courses

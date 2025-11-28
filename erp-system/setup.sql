@@ -68,6 +68,7 @@ CREATE TABLE sections (
     days_times VARCHAR(50),
     room VARCHAR(20),
     capacity INT,
+    drop_deadline DATE,
     FOREIGN KEY (course_code) REFERENCES courses(course_code),
     FOREIGN KEY (instructor_id) REFERENCES instructors(user_id)
 );
@@ -112,7 +113,7 @@ INSERT INTO users_auth (username, role, password_hash) VALUES
 ('stu2', 'STUDENT', '$2a$10$13zqR9bFg81RgccFQVW7F.KQi0Pt9f38wPuY7su1rqbSI8CEKXQ9S');
 
 -- NOTE: All users have password 'password' (without quotes)
--- If you need to generate a new hash, use: BCrypt.hashpw("password", BCrypt.gensalt())
+-- Hash generation command: BCrypt.hashpw("password", BCrypt.gensalt())
 
 -- B. Profiles (Link to Auth IDs)
 -- Assuming IDs are 1=admin, 2=inst1, 3=stu1, 4=stu2

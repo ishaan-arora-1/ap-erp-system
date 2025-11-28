@@ -111,21 +111,36 @@ public class DashboardScreen extends JFrame {
             String p2 = new String(confirmPass.getPassword());
             String old = new String(oldPass.getPassword());
 
-            if (!p1.equals(p2)) {
-                JOptionPane.showMessageDialog(this, "New passwords do not match.");
+            if (old.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Old password cannot be empty.", "Invalid Input", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             if (p1.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Password cannot be empty.");
+                JOptionPane.showMessageDialog(this, "New password cannot be empty.", "Invalid Input", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            if (p1.length() < 4) {
+                JOptionPane.showMessageDialog(this, "Password must be at least 4 characters long.", "Invalid Password", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (!p1.equals(p2)) {
+                JOptionPane.showMessageDialog(this, "The new passwords you entered don't match. Please try again.", "Password Mismatch", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            if (p1.equals(old)) {
+                JOptionPane.showMessageDialog(this, "New password cannot be the same as old password.", "Invalid Password", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             try {
                 authService.changePassword(SessionManager.getCurrentUser().getUserId(), old, p1);
-                JOptionPane.showMessageDialog(this, "Password Changed Successfully!");
+                JOptionPane.showMessageDialog(this, "Your password has been changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Password Change Failed", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
